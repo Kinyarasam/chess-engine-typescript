@@ -25,7 +25,7 @@ jobs:
         run: yarn install --frozen-lockfile
 
       - name: Type check
-        run: yarn tsc --noEmit
+        run: yarn typecheck
 
       - name: Lint
         run: yarn lint

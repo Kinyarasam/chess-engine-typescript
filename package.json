@@ -4,6 +4,7 @@
   "description": "",
   "main": "dist/index.js",
   "scripts": {
+    "typecheck": "tsc --noEmit",
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
     "test": "vitest run",
