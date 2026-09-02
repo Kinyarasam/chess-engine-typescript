@@ -22,13 +22,15 @@ export class MoveGenerator {
         continue;
       }
 
-      moves.push(...this.generatePieceMoves(position.board, square));
+      moves.push(...this.generatePieceMoves(position, square));
     }
 
     return moves;
   }
 
-  public generatePieceMoves(board: Board, square: Square): Move[] {
+  public generatePieceMoves(position: Position, square: Square): Move[] {
+    const { board } = position;
+
     const piece = board.getPiece(square);
 
     if (piece === null) {
@@ -37,7 +39,7 @@ export class MoveGenerator {
 
     switch (piece.type) {
       case PieceType.Pawn:
-        return this.generatePawnMoves(board, square);
+        return this.generatePawnMoves(position, square);
 
       case PieceType.Knight:
         return this.generateKnightMoves(board, square);
@@ -201,8 +203,8 @@ export class MoveGenerator {
     return moves;
   }
 
-  public generatePawnMoves(board: Board, square: Square): Move[] {
-    const piece = board.getPiece(square);
+  public generatePawnMoves(position: Position, square: Square): Move[] {
+    const piece = position.board.getPiece(square);
 
     if (piece === null || piece.type !== PieceType.Pawn) {
       return [];
@@ -218,7 +220,7 @@ export class MoveGenerator {
     if (this.isOnBoard(square.file, oneStepRank)) {
       const oneStep = Square.fromIndex(oneStepRank * 8 + square.file);
 
-      if (board.getPiece(oneStep) === null) {
+      if (position.board.getPiece(oneStep) === null) {
         this.addPawnMove(square, oneStep, piece.color, moves);
 
         if (square.rank === startRank) {
@@ -226,7 +228,7 @@ export class MoveGenerator {
 
           const twoStep = Square.fromIndex(twoStepRank * 8 + square.file);
 
-          if (board.getPiece(twoStep) === null) {
+          if (position.board.getPiece(twoStep) === null) {
             moves.push(new Move(square, twoStep));
           }
         }
@@ -234,7 +236,7 @@ export class MoveGenerator {
     }
 
     this.addPawnCapture(
-      board,
+      position.board,
       square,
       square.file - 1,
       oneStepRank,
@@ -243,7 +245,25 @@ export class MoveGenerator {
     );
 
     this.addPawnCapture(
-      board,
+      position.board,
+      square,
+      square.file + 1,
+      oneStepRank,
+      piece.color,
+      moves,
+    );
+
+    this.addEnPassantCapture(
+      position,
+      square,
+      square.file - 1,
+      oneStepRank,
+      piece.color,
+      moves,
+    );
+
+    this.addEnPassantCapture(
+      position,
       square,
       square.file + 1,
       oneStepRank,
@@ -351,6 +371,45 @@ export class MoveGenerator {
 
     for (const promotion of promotionPieces) {
       moves.push(new Move(from, to, MoveType.Promotion, promotion));
+    }
+  }
+
+  private addEnPassantCapture(
+    position: Position,
+    from: Square,
+    file: number,
+    rank: number,
+    color: Color,
+    moves: Move[],
+  ): void {
+    const enPassantSquare = position.enPassantSquare;
+
+    if (enPassantSquare === null) {
+      return;
+    }
+
+    if (enPassantSquare.file !== file || enPassantSquare.rank !== rank) {
+      return;
+    }
+
+    const target = enPassantSquare;
+
+    if (position.board.getPiece(target) !== null) {
+      return;
+    }
+
+    const capturedPawnRank = color === Color.White ? rank - 1 : rank + 1;
+
+    if (!this.isOnBoard(file, capturedPawnRank)) {
+      return;
+    }
+
+    const capturePawn = position.board.getPiece(
+      Square.fromIndex(capturedPawnRank * 8 + file),
+    );
+
+    if (capturePawn?.type === PieceType.Pawn && capturePawn.color !== color) {
+      moves.push(new Move(from, target, MoveType.EnPassant));
     }
   }
 }

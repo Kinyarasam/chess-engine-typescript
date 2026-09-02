@@ -8,17 +8,20 @@ import { PieceType } from '../../../src/domain/pieces/PieceType.js';
 import { MoveGenerator } from '../../../src/domain/moves/MoveGenerator.js';
 import { MoveType } from '../../../src/domain/moves/MoveType.js';
 import { Position } from '../../../src/domain/game/Position.js';
+import { CastlingRights } from '../../../src/domain/game/CastlingRights.js';
+import { Move } from '../../../src/domain/moves/Move.js';
 
 describe('MoveGenerator', () => {
   const generator = new MoveGenerator();
 
   it('generates one forward move for a white pawn', () => {
-    const board = new Board();
+    const position = new Position();
+    const { board } = position;
     const e2 = Square.fromAlgebraic('e2');
 
     board.setPiece(e2, new Piece(Color.White, PieceType.Pawn));
 
-    const moves = generator.generatePawnMoves(board, e2);
+    const moves = generator.generatePawnMoves(position, e2);
 
     expect(moves).toHaveLength(2);
     expect(moves.some((move) => move.to.toAlgebraic() === 'e3')).toBe(true);
@@ -26,12 +29,13 @@ describe('MoveGenerator', () => {
   });
 
   it('generates one and two square moves for a black pawn', () => {
-    const board = new Board();
+    const position = new Position();
+    const { board } = position;
     const e7 = Square.fromAlgebraic('e7');
 
     board.setPiece(e7, new Piece(Color.Black, PieceType.Pawn));
 
-    const moves = generator.generatePawnMoves(board, e7);
+    const moves = generator.generatePawnMoves(position, e7);
 
     expect(moves).toHaveLength(2);
     expect(moves.some((move) => move.to.toAlgebraic() === 'e6')).toBe(true);
@@ -39,19 +43,22 @@ describe('MoveGenerator', () => {
   });
 
   it('does not generate a double move after leaving the starting rank', () => {
-    const board = new Board();
+    const position = new Position();
+
     const e4 = Square.fromAlgebraic('e4');
 
-    board.setPiece(e4, new Piece(Color.White, PieceType.Pawn));
+    position.board.setPiece(e4, new Piece(Color.White, PieceType.Pawn));
 
-    const moves = generator.generatePawnMoves(board, e4);
+    const moves = generator.generatePawnMoves(position, e4);
 
     expect(moves).toHaveLength(1);
     expect(moves[0]?.to.toAlgebraic()).toBe('e5');
   });
 
   it('does not move forward into an occupied square', () => {
-    const board = new Board();
+    const position = new Position();
+
+    const { board } = position;
 
     const e2 = Square.fromAlgebraic('e2');
     const e3 = Square.fromAlgebraic('e3');
@@ -60,44 +67,46 @@ describe('MoveGenerator', () => {
 
     board.setPiece(e3, new Piece(Color.Black, PieceType.Knight));
 
-    const moves = generator.generatePawnMoves(board, e2);
+    const moves = generator.generatePawnMoves(position, e2);
 
     expect(moves).toHaveLength(0);
   });
 
   it('does not generate a double move when the square immediately ahead is occupied', () => {
-    const board = new Board();
+    const position = new Position();
 
     const e2 = Square.fromAlgebraic('e2');
     const e3 = Square.fromAlgebraic('e3');
 
-    board.setPiece(e2, new Piece(Color.White, PieceType.Pawn));
+    position.board.setPiece(e2, new Piece(Color.White, PieceType.Pawn));
 
-    board.setPiece(e3, new Piece(Color.White, PieceType.Knight));
+    position.board.setPiece(e3, new Piece(Color.White, PieceType.Knight));
 
-    const moves = generator.generatePawnMoves(board, e2);
+    const moves = generator.generatePawnMoves(position, e2);
 
     expect(moves).toHaveLength(0);
   });
 
   it('does not generate a double move when the destination is occupied', () => {
-    const board = new Board();
+    const position = new Position();
 
     const e2 = Square.fromAlgebraic('e2');
     const e4 = Square.fromAlgebraic('e4');
 
-    board.setPiece(e2, new Piece(Color.White, PieceType.Pawn));
+    position.board.setPiece(e2, new Piece(Color.White, PieceType.Pawn));
 
-    board.setPiece(e4, new Piece(Color.Black, PieceType.Knight));
+    position.board.setPiece(e4, new Piece(Color.Black, PieceType.Knight));
 
-    const moves = generator.generatePawnMoves(board, e2);
+    const moves = generator.generatePawnMoves(position, e2);
 
     expect(moves).toHaveLength(1);
     expect(moves[0]?.to.toAlgebraic()).toBe('e3');
   });
 
   it('generates a capture to the left', () => {
-    const board = new Board();
+    const position = new Position();
+
+    const { board } = position;
 
     const e4 = Square.fromAlgebraic('e4');
     const d5 = Square.fromAlgebraic('d5');
@@ -106,7 +115,7 @@ describe('MoveGenerator', () => {
 
     board.setPiece(d5, new Piece(Color.Black, PieceType.Knight));
 
-    const moves = generator.generatePawnMoves(board, e4);
+    const moves = generator.generatePawnMoves(position, e4);
 
     expect(
       moves.some(
@@ -117,7 +126,9 @@ describe('MoveGenerator', () => {
   });
 
   it('generates a capture to the right', () => {
-    const board = new Board();
+    const position = new Position();
+
+    const { board } = position;
 
     const e4 = Square.fromAlgebraic('e4');
     const f5 = Square.fromAlgebraic('f5');
@@ -126,7 +137,7 @@ describe('MoveGenerator', () => {
 
     board.setPiece(f5, new Piece(Color.Black, PieceType.Knight));
 
-    const moves = generator.generatePawnMoves(board, e4);
+    const moves = generator.generatePawnMoves(position, e4);
 
     expect(
       moves.some(
@@ -137,7 +148,9 @@ describe('MoveGenerator', () => {
   });
 
   it('does not capture a friendly piece', () => {
-    const board = new Board();
+    const position = new Position();
+
+    const { board } = position;
 
     const e4 = Square.fromAlgebraic('e4');
     const d5 = Square.fromAlgebraic('d5');
@@ -146,25 +159,29 @@ describe('MoveGenerator', () => {
 
     board.setPiece(d5, new Piece(Color.White, PieceType.Knight));
 
-    const moves = generator.generatePawnMoves(board, e4);
+    const moves = generator.generatePawnMoves(position, e4);
 
     expect(moves.some((move) => move.to.toAlgebraic() === 'd5')).toBe(false);
   });
 
   it('returns no moves for a non-pawn piece', () => {
-    const board = new Board();
+    const position = new Position();
+
+    const { board } = position;
+
     const e4 = Square.fromAlgebraic('e4');
 
     board.setPiece(e4, new Piece(Color.White, PieceType.Knight));
 
-    expect(generator.generatePawnMoves(board, e4)).toHaveLength(0);
+    expect(generator.generatePawnMoves(position, e4)).toHaveLength(0);
   });
 
   it('returns no moves for an empty square', () => {
-    const board = new Board();
+    const position = new Position();
+
     const e4 = Square.fromAlgebraic('e4');
 
-    expect(generator.generatePawnMoves(board, e4)).toHaveLength(0);
+    expect(generator.generatePawnMoves(position, e4)).toHaveLength(0);
   });
 
   it('generates all eight knight moves from the center', () => {
@@ -185,12 +202,13 @@ describe('MoveGenerator', () => {
   });
 
   it('generates only valid knight moves from a corner', () => {
-    const board = new Board();
+    const position = new Position();
+
     const a1 = Square.fromAlgebraic('a1');
 
-    board.setPiece(a1, new Piece(Color.White, PieceType.Knight));
+    position.board.setPiece(a1, new Piece(Color.White, PieceType.Knight));
 
-    const moves = generator.generateKnightMoves(board, a1);
+    const moves = generator.generateKnightMoves(position.board, a1);
 
     const destinations = moves.map((move) => move.to.toAlgebraic());
 
@@ -580,19 +598,22 @@ describe('MoveGenerator', () => {
   });
 
   it('returns no moves for an empty square', () => {
-    const board = new Board();
+    const position = new Position();
+
     const e4 = Square.fromAlgebraic('e4');
 
-    expect(generator.generatePieceMoves(board, e4)).toHaveLength(0);
+    expect(generator.generatePieceMoves(position, e4)).toHaveLength(0);
   });
 
   it('dispatches to pawn move generation', () => {
-    const board = new Board();
+    const position = new Position();
+
+    const { board } = position;
     const e2 = Square.fromAlgebraic('e2');
 
     board.setPiece(e2, new Piece(Color.White, PieceType.Pawn));
 
-    const moves = generator.generatePieceMoves(board, e2);
+    const moves = generator.generatePieceMoves(position, e2);
 
     expect(moves).toHaveLength(2);
 
@@ -602,63 +623,66 @@ describe('MoveGenerator', () => {
   });
 
   it('dispatches to knight move generation', () => {
-    const board = new Board();
+    const position = new Position();
+
     const e4 = Square.fromAlgebraic('e4');
 
-    board.setPiece(e4, new Piece(Color.White, PieceType.Knight));
+    position.board.setPiece(e4, new Piece(Color.White, PieceType.Knight));
 
-    const moves = generator.generatePieceMoves(board, e4);
+    const moves = generator.generatePieceMoves(position, e4);
 
     expect(moves).toHaveLength(8);
   });
 
   it('dispatches to bishop move generation', () => {
-    const board = new Board();
+    const position = new Position();
+
     const e4 = Square.fromAlgebraic('e4');
 
-    board.setPiece(e4, new Piece(Color.White, PieceType.Bishop));
+    position.board.setPiece(e4, new Piece(Color.White, PieceType.Bishop));
 
-    expect(generator.generatePieceMoves(board, e4)).toHaveLength(13);
+    expect(generator.generatePieceMoves(position, e4)).toHaveLength(13);
   });
 
   it('dispatches to rook move generation', () => {
-    const board = new Board();
+    const position = new Position();
+
     const e4 = Square.fromAlgebraic('e4');
 
-    board.setPiece(e4, new Piece(Color.White, PieceType.Rook));
+    position.board.setPiece(e4, new Piece(Color.White, PieceType.Rook));
 
-    expect(generator.generatePieceMoves(board, e4)).toHaveLength(14);
+    expect(generator.generatePieceMoves(position, e4)).toHaveLength(14);
   });
 
   it('dispatches to queen move generation', () => {
-    const board = new Board();
+    const position = new Position();
+    const { board } = position;
     const e4 = Square.fromAlgebraic('e4');
 
     board.setPiece(e4, new Piece(Color.White, PieceType.Queen));
 
-    expect(generator.generatePieceMoves(board, e4)).toHaveLength(27);
+    expect(generator.generatePieceMoves(position, e4)).toHaveLength(27);
   });
 
   it('dispatches to king move generation', () => {
-    const board = new Board();
+    const position = new Position();
+
     const e4 = Square.fromAlgebraic('e4');
 
-    board.setPiece(e4, new Piece(Color.White, PieceType.King));
+    position.board.setPiece(e4, new Piece(Color.White, PieceType.King));
 
-    expect(generator.generatePieceMoves(board, e4)).toHaveLength(8);
+    expect(generator.generatePieceMoves(position, e4)).toHaveLength(8);
   });
 
   it('generates moves only for the side to move', () => {
-    const board = new Board();
+    const position = new Position();
 
     const e2 = Square.fromAlgebraic('e2');
     const e7 = Square.fromAlgebraic('e7');
 
-    board.setPiece(e2, new Piece(Color.White, PieceType.Pawn));
+    position.board.setPiece(e2, new Piece(Color.White, PieceType.Pawn));
 
-    board.setPiece(e7, new Piece(Color.Black, PieceType.Pawn));
-
-    const position = new Position(board, Color.White);
+    position.board.setPiece(e7, new Piece(Color.Black, PieceType.Pawn));
 
     const moves = generator.generateMoves(position);
 
@@ -710,24 +734,25 @@ describe('MoveGenerator', () => {
   });
 
   it('generates piece moves independently of side to move', () => {
-    const board = new Board();
+    const position = new Position();
+
     const e2 = Square.fromAlgebraic('e2');
 
-    board.setPiece(e2, new Piece(Color.White, PieceType.Pawn));
+    position.board.setPiece(e2, new Piece(Color.White, PieceType.Pawn));
 
-    const moves = generator.generatePieceMoves(board, e2);
+    const moves = generator.generatePieceMoves(position, e2);
 
     expect(moves).toHaveLength(2);
   });
 
   it('generates all promotion options for a white pawn', () => {
-    const board = new Board();
+    const position = new Position();
 
     const e7 = Square.fromAlgebraic('e7');
 
-    board.setPiece(e7, new Piece(Color.White, PieceType.Pawn));
+    position.board.setPiece(e7, new Piece(Color.White, PieceType.Pawn));
 
-    const moves = generator.generatePawnMoves(board, e7);
+    const moves = generator.generatePawnMoves(position, e7);
 
     expect(moves).toHaveLength(4);
 
@@ -747,13 +772,13 @@ describe('MoveGenerator', () => {
   });
 
   it('generates all promotion options for a black pawn', () => {
-    const board = new Board();
+    const position = new Position();
 
     const e2 = Square.fromAlgebraic('e2');
 
-    board.setPiece(e2, new Piece(Color.Black, PieceType.Pawn));
+    position.board.setPiece(e2, new Piece(Color.Black, PieceType.Pawn));
 
-    const moves = generator.generatePawnMoves(board, e2);
+    const moves = generator.generatePawnMoves(position, e2);
 
     expect(moves).toHaveLength(4);
 
@@ -766,16 +791,16 @@ describe('MoveGenerator', () => {
   });
 
   it('generates promotion options when capturing', () => {
-    const board = new Board();
+    const position = new Position();
 
     const e7 = Square.fromAlgebraic('e7');
     const f8 = Square.fromAlgebraic('f8');
 
-    board.setPiece(e7, new Piece(Color.White, PieceType.Pawn));
+    position.board.setPiece(e7, new Piece(Color.White, PieceType.Pawn));
 
-    board.setPiece(f8, new Piece(Color.Black, PieceType.Rook));
+    position.board.setPiece(f8, new Piece(Color.Black, PieceType.Rook));
 
-    const moves = generator.generatePawnMoves(board, e7);
+    const moves = generator.generatePawnMoves(position, e7);
 
     const captures = moves.filter((move) => move.to.toAlgebraic() === 'f8');
 
@@ -787,17 +812,187 @@ describe('MoveGenerator', () => {
   });
 
   it('does not generate promotion when the final square is occupied', () => {
-    const board = new Board();
+    const position = new Position();
 
     const e7 = Square.fromAlgebraic('e7');
     const e8 = Square.fromAlgebraic('e8');
 
-    board.setPiece(e7, new Piece(Color.White, PieceType.Pawn));
+    position.board.setPiece(e7, new Piece(Color.White, PieceType.Pawn));
 
-    board.setPiece(e8, new Piece(Color.White, PieceType.Rook));
+    position.board.setPiece(e8, new Piece(Color.White, PieceType.Rook));
 
-    const moves = generator.generatePawnMoves(board, e7);
+    const moves = generator.generatePawnMoves(position, e7);
 
     expect(moves).toHaveLength(0);
+  });
+
+  it('generates a white enpassant capture to the left', () => {
+    const board = new Board();
+
+    board.setPiece(
+      Square.fromAlgebraic('f5'),
+      new Piece(Color.White, PieceType.Pawn),
+    );
+
+    board.setPiece(
+      Square.fromAlgebraic('e5'),
+      new Piece(Color.Black, PieceType.Pawn),
+    );
+
+    const position = new Position(
+      board,
+      Color.White,
+      CastlingRights.None,
+      Square.fromAlgebraic('e6'),
+    );
+
+    const generator = new MoveGenerator();
+
+    const moves = generator.generateMoves(position);
+
+    expect(moves).toContainEqual(
+      new Move(
+        Square.fromAlgebraic('f5'),
+        Square.fromAlgebraic('e6'),
+        MoveType.EnPassant,
+      ),
+    );
+  });
+
+  it('generates a black enpassant capture to the right', () => {
+    const board = new Board();
+
+    board.setPiece(
+      Square.fromAlgebraic('e4'),
+      new Piece(Color.Black, PieceType.Pawn),
+    );
+
+    board.setPiece(
+      Square.fromAlgebraic('f4'),
+      new Piece(Color.White, PieceType.Pawn),
+    );
+
+    const position = new Position(
+      board,
+      Color.Black,
+      CastlingRights.None,
+      Square.fromAlgebraic('f3'),
+    );
+
+    const generator = new MoveGenerator();
+
+    const moves = generator.generateMoves(position);
+
+    expect(moves).toContainEqual(
+      new Move(
+        Square.fromAlgebraic('e4'),
+        Square.fromAlgebraic('f3'),
+        MoveType.EnPassant,
+      ),
+    );
+  });
+
+  it('does not generate en passant when no en passant square is available', () => {
+    const board = new Board();
+
+    board.setPiece(
+      Square.fromAlgebraic('f5'),
+      new Piece(Color.White, PieceType.Pawn),
+    );
+
+    board.setPiece(
+      Square.fromAlgebraic('e5'),
+      new Piece(Color.Black, PieceType.Pawn),
+    );
+
+    const position = new Position(
+      board,
+      Color.White,
+      CastlingRights.None,
+      null,
+    );
+
+    const generator = new MoveGenerator();
+
+    const moves = generator.generateMoves(position);
+
+    expect(moves).not.toContainEqual(
+      new Move(
+        Square.fromAlgebraic('f5'),
+        Square.fromAlgebraic('e6'),
+        MoveType.EnPassant,
+      ),
+    );
+  });
+
+  it('does not generate en passant when the target square is occupied', () => {
+    const board = new Board();
+
+    board.setPiece(
+      Square.fromAlgebraic('f5'),
+      new Piece(Color.White, PieceType.Pawn),
+    );
+
+    board.setPiece(
+      Square.fromAlgebraic('e5'),
+      new Piece(Color.Black, PieceType.Pawn),
+    );
+
+    board.setPiece(
+      Square.fromAlgebraic('e6'),
+      new Piece(Color.White, PieceType.Knight),
+    );
+
+    const position = new Position(
+      board,
+      Color.White,
+      CastlingRights.None,
+      Square.fromAlgebraic('e6'),
+    );
+
+    const generator = new MoveGenerator();
+
+    const moves = generator.generateMoves(position);
+
+    expect(moves).not.toContainEqual(
+      new Move(
+        Square.fromAlgebraic('f5'),
+        Square.fromAlgebraic('e6'),
+        MoveType.EnPassant,
+      ),
+    );
+  });
+
+  it('does not generate en passant when the adjacent piece is not an enemy pawn', () => {
+    const board = new Board();
+
+    board.setPiece(
+      Square.fromAlgebraic('f5'),
+      new Piece(Color.White, PieceType.Pawn),
+    );
+
+    board.setPiece(
+      Square.fromAlgebraic('e5'),
+      new Piece(Color.Black, PieceType.Knight),
+    );
+
+    const position = new Position(
+      board,
+      Color.White,
+      CastlingRights.None,
+      Square.fromAlgebraic('e6'),
+    );
+
+    const generator = new MoveGenerator();
+
+    const moves = generator.generateMoves(position);
+
+    expect(moves).not.toContainEqual(
+      new Move(
+        Square.fromAlgebraic('f5'),
+        Square.fromAlgebraic('e6'),
+        MoveType.EnPassant,
+      ),
+    );
   });
 });
