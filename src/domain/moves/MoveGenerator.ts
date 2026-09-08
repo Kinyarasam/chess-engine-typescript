@@ -103,6 +103,8 @@ export class MoveGenerator {
       }
     }
 
+    moves.push(...this.generateCastlingMoves(board, square));
+
     return moves;
   }
 
@@ -290,7 +292,7 @@ export class MoveGenerator {
     const targetPiece = board.getPiece(target);
 
     if (targetPiece !== null && targetPiece.color !== color) {
-      const promotionRank = Color.White ? 7 : 0;
+      const promotionRank = color === Color.White ? 7 : 0;
 
       if (target.rank === promotionRank) {
         this.addPromotionMoves(from, target, moves);
@@ -411,5 +413,70 @@ export class MoveGenerator {
     if (capturePawn?.type === PieceType.Pawn && capturePawn.color !== color) {
       moves.push(new Move(from, target, MoveType.EnPassant));
     }
+  }
+
+  private generateCastlingMoves(board: Board, square: Square): Move[] {
+    const king = board.getPiece(square);
+
+    if (king === null || king.type !== PieceType.King) {
+      return [];
+    }
+
+    const isWhite = king.color === Color.White;
+
+    const expectedKingSquare = Square.fromAlgebraic(isWhite ? 'e1' : 'e8');
+
+    if (square.index !== expectedKingSquare.index) {
+      return [];
+    }
+
+    const moves: Move[] = [];
+
+    const kingSideRookSquare = Square.fromAlgebraic(isWhite ? 'h1' : 'h8');
+
+    const kingSideRook = board.getPiece(kingSideRookSquare);
+
+    if (
+      kingSideRook !== null &&
+      kingSideRook.type === PieceType.Rook &&
+      kingSideRook.color === king.color
+    ) {
+      const fSquare = Square.fromAlgebraic(isWhite ? 'f1' : 'f8');
+
+      const gSquare = Square.fromAlgebraic(isWhite ? 'g1' : 'g8');
+
+      if (
+        board.getPiece(fSquare) === null &&
+        board.getPiece(gSquare) === null
+      ) {
+        moves.push(new Move(square, gSquare, MoveType.CastlingKingSide));
+      }
+    }
+
+    const queenSideRookSquare = Square.fromAlgebraic(isWhite ? 'a1' : 'a8');
+
+    const queenSideRook = board.getPiece(queenSideRookSquare);
+
+    if (
+      queenSideRook !== null &&
+      queenSideRook.type === PieceType.Rook &&
+      queenSideRook.color === king.color
+    ) {
+      const bSquare = Square.fromAlgebraic(isWhite ? 'b1' : 'b8');
+
+      const cSquare = Square.fromAlgebraic(isWhite ? 'c1' : 'c8');
+
+      const dSquare = Square.fromAlgebraic(isWhite ? 'd1' : 'd8');
+
+      if (
+        board.getPiece(bSquare) === null &&
+        board.getPiece(cSquare) === null &&
+        board.getPiece(dSquare) === null
+      ) {
+        moves.push(new Move(square, cSquare, MoveType.CastlingQueenSide));
+      }
+    }
+
+    return moves;
   }
 }
