@@ -8,12 +8,15 @@ import { Square } from '../board/Square.js';
 import { CastlingRights } from './CastlingRights.js';
 import type { Piece } from '../pieces/Piece.js';
 import { RepetitionTracker } from './RepetitionTracker.js';
+import { GameStatusDetector } from './GameStatusDetector.js';
+import type { GameStatus } from './GameStatus.js';
 
 export class Game {
   private readonly moveValidator: MoveValidator;
   private readonly moveApplier: MoveApplier;
   private readonly history: Move[];
   private readonly repetitionTracker: RepetitionTracker;
+  private readonly gameStatusDetector: GameStatusDetector;
 
   public readonly position: Position;
 
@@ -26,6 +29,7 @@ export class Game {
     this.moveValidator = moveValidator;
     this.moveApplier = moveApplier;
     this.repetitionTracker = new RepetitionTracker(this.position);
+    this.gameStatusDetector = new GameStatusDetector();
     this.history = [];
   }
 
@@ -78,6 +82,12 @@ export class Game {
     return this.history;
   }
 
+  public getStatus(): GameStatus {
+    return this.gameStatusDetector.getStatus(
+      this.position,
+      this.repetitionTracker.getCount(this.position),
+    );
+  }
   private updateEnPassantSquare(move: Move, movingPieceType: PieceType): void {
     this.position.enPassantSquare = null;
 

@@ -5,4 +5,5 @@ export enum GameStatus {
   Stalemate = 'stalemate',
   DrawByFiftyMove = 'draw-by-fifty-move',
   DrawByInsufficientMaterial = 'draw-by-insufficient-material',
+  DrawByThreefoldRepetition = 'draw-by-three-fold-repetition',
 }

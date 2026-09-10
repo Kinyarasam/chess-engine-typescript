@@ -9,6 +9,7 @@ import { Move } from '../../../src/domain/moves/Move';
 import { Game } from '../../../src/domain/game/Game';
 import { CastlingRights } from '../../../src/domain/game/CastlingRights';
 import { MoveType } from '../../../src/domain/moves/MoveType';
+import { GameStatus } from '../../../src/domain/game/GameStatus';
 
 function createBasicPosition(): Position {
   const board = new Board();
@@ -413,5 +414,11 @@ describe('threefold repetition', () => {
     game.play(move('f6', 'g8'));
 
     expect(game.isThreefoldRepetition()).toBe(true);
+  });
+
+  it('reports the current game status', () => {
+    const game = createGame();
+
+    expect(game.getStatus()).toBe(GameStatus.InProgress);
   });
 });

@@ -18,6 +18,9 @@ describe('GameStatus', () => {
     expect(GameStatus.DrawByInsufficientMaterial).toBe(
       'draw-by-insufficient-material',
     );
+    expect(GameStatus.DrawByThreefoldRepetition).toBe(
+      'draw-by-three-fold-repetition',
+    );
   });
 
   it('detects an in-progress game', () => {
@@ -218,6 +221,58 @@ describe('GameStatus', () => {
 
     expect(detector.getStatus(position)).toBe(
       GameStatus.DrawByInsufficientMaterial,
+    );
+  });
+
+  it('detects draw by three fold repetition', () => {
+    const board = new Board();
+
+    board.setPiece(
+      Square.fromAlgebraic('e1'),
+      new Piece(Color.White, PieceType.King),
+    );
+
+    board.setPiece(
+      Square.fromAlgebraic('e8'),
+      new Piece(Color.Black, PieceType.King),
+    );
+
+    board.setPiece(
+      Square.fromAlgebraic('a1'),
+      new Piece(Color.White, PieceType.Rook),
+    );
+
+    const position = new Position(board);
+    const detector = new GameStatusDetector();
+
+    expect(detector.getStatus(position, 3)).toBe(
+      GameStatus.DrawByThreefoldRepetition,
+    );
+  });
+
+  it('does not detects a three fold repetition before the third occurrence', () => {
+    const board = new Board();
+
+    board.setPiece(
+      Square.fromAlgebraic('e1'),
+      new Piece(Color.White, PieceType.King),
+    );
+
+    board.setPiece(
+      Square.fromAlgebraic('e8'),
+      new Piece(Color.Black, PieceType.King),
+    );
+
+    board.setPiece(
+      Square.fromAlgebraic('a1'),
+      new Piece(Color.White, PieceType.Rook),
+    );
+
+    const position = new Position(board);
+    const detector = new GameStatusDetector();
+
+    expect(detector.getStatus(position, 2)).not.toBe(
+      GameStatus.DrawByThreefoldRepetition,
     );
   });
 });

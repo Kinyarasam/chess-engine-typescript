@@ -19,7 +19,7 @@ export class GameStatusDetector {
     this.insufficientMaterialDetector = insufficientMaterialDetector;
   }
 
-  public getStatus(position: Position): GameStatus {
+  public getStatus(position: Position, repetitionCount = 1): GameStatus {
     const sideToMove = position.sideToMove;
     const inCheck = this.checkDetector.isInCheck(position, sideToMove);
 
@@ -36,6 +36,10 @@ export class GameStatusDetector {
 
     if (position.halfmoveClock >= 100) {
       return GameStatus.DrawByFiftyMove;
+    }
+
+    if (repetitionCount >= 3) {
+      return GameStatus.DrawByThreefoldRepetition;
     }
 
     return inCheck ? GameStatus.Check : GameStatus.InProgress;
