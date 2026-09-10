@@ -1,9 +1,7 @@
-import { Board } from '../board/Board.js';
-import { Square } from '../board/Square.js';
 import { CheckDetector } from '../game/CheckDetector.js';
 import { Position } from '../game/Position.js';
+import { PositionCloner } from '../game/PositionCloner.js';
 import { Color } from '../pieces/Color.js';
-import { Piece } from '../pieces/Piece.js';
 import { PieceType } from '../pieces/PieceType.js';
 import { LegalMoveGenerator } from './LegalMoveGenerator.js';
 import type { Move } from './Move.js';
@@ -149,7 +147,7 @@ export class MoveNotation {
   }
 
   private getCheckSuffix(position: Position, move: Move): string {
-    const nextPosition = this.clonePosition(position);
+    const nextPosition = PositionCloner.clone(position);
 
     this.moveApplier.apply(nextPosition, move);
 
@@ -168,29 +166,5 @@ export class MoveNotation {
       this.legalMoveGenerator.generateMoves(nextPosition).length > 0;
 
     return hasLegalMoves ? '+' : '#';
-  }
-
-  private clonePosition(position: Position): Position {
-    const board = new Board();
-
-    for (let index = 0; index < 64; index++) {
-      const square = Square.fromIndex(index);
-      const piece = position.board.getPiece(square);
-
-      if (piece !== null) {
-        board.setPiece(square, new Piece(piece.color, piece.type));
-      }
-    }
-
-    return new Position(
-      board,
-      position.sideToMove,
-      position.castlingRights,
-      position.enPassantSquare === null
-        ? null
-        : Square.fromIndex(position.enPassantSquare.index),
-      position.halfmoveClock,
-      position.fullmoveNumber,
-    );
   }
 }
