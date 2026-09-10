@@ -2,27 +2,27 @@ import { Position } from '../game/Position.js';
 import type { Move } from '../moves/Move.js';
 import type { Evaluator } from './Evaluator.js';
 import { LegalMoveGenerator } from '../moves/LegalMoveGenerator.js';
-import { MoveApplier } from '../moves/MoveApplier.js';
 import { Color } from '../pieces/Color.js';
 import { PositionCloner } from '../game/PositionCloner.js';
 import { CheckDetector } from '../game/CheckDetector.js';
 import { SearchScore } from './SearchScore.js';
+import { PositionTransition } from '../game/PositionTransition.js';
 
 export class Search {
   private readonly evaluator: Evaluator;
   private readonly legalMoveGenerator: LegalMoveGenerator;
-  private readonly moveApplier: MoveApplier;
   private readonly checkDetector: CheckDetector;
+  private readonly positionTransition: PositionTransition;
 
   public constructor(
     evaluator: Evaluator,
     legalMoveGenerator: LegalMoveGenerator = new LegalMoveGenerator(),
-    moveApplier: MoveApplier = new MoveApplier(),
+    positionTransition: PositionTransition = new PositionTransition(),
     checkDetector: CheckDetector = new CheckDetector(),
   ) {
     this.evaluator = evaluator;
     this.legalMoveGenerator = legalMoveGenerator;
-    this.moveApplier = moveApplier;
+    this.positionTransition = positionTransition;
     this.checkDetector = checkDetector;
   }
 
@@ -47,9 +47,7 @@ export class Search {
     for (const move of legalMoves) {
       const nextPosition = PositionCloner.clone(position);
 
-      this.moveApplier.apply(nextPosition, move);
-
-      nextPosition.sideToMove = this.getOpponent(position.sideToMove);
+      this.positionTransition.apply(nextPosition, move);
 
       const score = -this.negamax(nextPosition, depth - 1, 1);
 
@@ -78,9 +76,7 @@ export class Search {
     for (const move of legalMoves) {
       const nextPosition = PositionCloner.clone(position);
 
-      this.moveApplier.apply(nextPosition, move);
-
-      nextPosition.sideToMove = this.getOpponent(position.sideToMove);
+      this.positionTransition.apply(nextPosition, move);
 
       const score = -this.negamax(nextPosition, depth - 1, ply + 1);
 
@@ -94,10 +90,6 @@ export class Search {
     const score = this.evaluator.evaluate(position);
 
     return position.sideToMove === Color.White ? score : -score;
-  }
-
-  private getOpponent(color: Color): Color {
-    return color === Color.White ? Color.Black : Color.White;
   }
 
   private getTerminalScore(position: Position, ply: number): number {
