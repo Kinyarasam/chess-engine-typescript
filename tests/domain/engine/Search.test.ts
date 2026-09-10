@@ -103,4 +103,54 @@ describe('Search', () => {
     expect(move?.to.toAlgebraic()).toBe('d8');
     expect(move?.type).toBe(MoveType.Capture);
   });
+
+  it('prefers checkmate over material', () => {
+    const board = new Board();
+
+    board.setPiece(
+      Square.fromAlgebraic('f6'),
+      new Piece(Color.White, PieceType.King),
+    );
+
+    board.setPiece(
+      Square.fromAlgebraic('g6'),
+      new Piece(Color.White, PieceType.Queen),
+    );
+
+    board.setPiece(
+      Square.fromAlgebraic('h8'),
+      new Piece(Color.Black, PieceType.King),
+    );
+
+    const position = new Position(board, Color.White);
+
+    const move = search.findBestMove(position, 1);
+
+    expect(move).not.toBeNull();
+    expect(move?.from.toAlgebraic()).toBe('g6');
+    expect(move?.to.toAlgebraic()).toBe('g7');
+  });
+
+  it('does not treat stalemate as a material advantage', () => {
+    const board = new Board();
+
+    board.setPiece(
+      Square.fromAlgebraic('h8'),
+      new Piece(Color.Black, PieceType.King),
+    );
+
+    board.setPiece(
+      Square.fromAlgebraic('f7'),
+      new Piece(Color.White, PieceType.Queen),
+    );
+
+    board.setPiece(
+      Square.fromAlgebraic('g6'),
+      new Piece(Color.White, PieceType.King),
+    );
+
+    const position = new Position(board, Color.Black);
+
+    expect(search.findBestMove(position, 1)).toBeNull();
+  });
 });

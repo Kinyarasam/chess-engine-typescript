@@ -52,8 +52,8 @@ export class AttackDetector {
         }
 
         if (
-          (piece.color === byColor && piece.type === PieceType.Bishop) ||
-          piece.type === PieceType.Queen
+          piece.color === byColor &&
+          (piece.type === PieceType.Bishop || piece.type === PieceType.Queen)
         ) {
           return true;
         }
@@ -95,8 +95,8 @@ export class AttackDetector {
         }
 
         if (
-          (piece.color === byColor && piece.type === PieceType.Rook) ||
-          piece.type === PieceType.Queen
+          piece.color === byColor &&
+          (piece.type === PieceType.Rook || piece.type === PieceType.Queen)
         ) {
           return true;
         }
