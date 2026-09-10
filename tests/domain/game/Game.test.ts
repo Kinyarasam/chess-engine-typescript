@@ -58,6 +58,48 @@ function move(from: string, to: string): Move {
   return new Move(Square.fromAlgebraic(from), Square.fromAlgebraic(to));
 }
 
+function createCheckmateGame(): Game {
+  const board = new Board();
+
+  board.setPiece(
+    Square.fromAlgebraic('h8'),
+    new Piece(Color.Black, PieceType.King),
+  );
+
+  board.setPiece(
+    Square.fromAlgebraic('f6'),
+    new Piece(Color.White, PieceType.King),
+  );
+
+  board.setPiece(
+    Square.fromAlgebraic('g7'),
+    new Piece(Color.White, PieceType.Queen),
+  );
+
+  return new Game(new Position(board, Color.Black));
+}
+
+function createStalemateGame(): Game {
+  const board = new Board();
+
+  board.setPiece(
+    Square.fromAlgebraic('h8'),
+    new Piece(Color.Black, PieceType.King),
+  );
+
+  board.setPiece(
+    Square.fromAlgebraic('f7'),
+    new Piece(Color.White, PieceType.King),
+  );
+
+  board.setPiece(
+    Square.fromAlgebraic('g6'),
+    new Piece(Color.White, PieceType.Queen),
+  );
+
+  return new Game(new Position(board, Color.Black));
+}
+
 describe('Game', () => {
   it('creates a game with a position', () => {
     const position = new Position();
@@ -420,5 +462,25 @@ describe('threefold repetition', () => {
     const game = createGame();
 
     expect(game.getStatus()).toBe(GameStatus.InProgress);
+  });
+
+  it('rejects moves after checkmate', () => {
+    const game = createCheckmateGame();
+
+    expect(game.getStatus()).toBe(GameStatus.Checkmate);
+
+    expect(() => game.play(move('h8', 'h7'))).toThrow(
+      'Cannot play move: game is checkmate',
+    );
+  });
+
+  it('rejects moves after stalemate', () => {
+    const game = createStalemateGame();
+
+    expect(game.getStatus()).toBe(GameStatus.Stalemate);
+
+    expect(() => game.play(move('h8', 'h7'))).toThrow(
+      'Cannot play move: game is stalemate',
+    );
   });
 });

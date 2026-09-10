@@ -9,7 +9,7 @@ import { CastlingRights } from './CastlingRights.js';
 import type { Piece } from '../pieces/Piece.js';
 import { RepetitionTracker } from './RepetitionTracker.js';
 import { GameStatusDetector } from './GameStatusDetector.js';
-import type { GameStatus } from './GameStatus.js';
+import { GameStatus } from './GameStatus.js';
 
 export class Game {
   private readonly moveValidator: MoveValidator;
@@ -34,6 +34,12 @@ export class Game {
   }
 
   public play(move: Move): void {
+    const status = this.getStatus();
+
+    if (status === GameStatus.Checkmate || status === GameStatus.Stalemate) {
+      throw new Error(`Cannot play move: game is ${status}`);
+    }
+
     if (!this.moveValidator.isLegal(this.position, move)) {
       throw new Error(
         `Illegal move: ${move.from.toAlgebraic()}-${move.to.toAlgebraic()}`,
@@ -88,6 +94,7 @@ export class Game {
       this.repetitionTracker.getCount(this.position),
     );
   }
+
   private updateEnPassantSquare(move: Move, movingPieceType: PieceType): void {
     this.position.enPassantSquare = null;
 

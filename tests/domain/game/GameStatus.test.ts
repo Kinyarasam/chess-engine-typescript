@@ -19,7 +19,7 @@ describe('GameStatus', () => {
       'draw-by-insufficient-material',
     );
     expect(GameStatus.DrawByThreefoldRepetition).toBe(
-      'draw-by-three-fold-repetition',
+      'draw-by-threefold-repetition',
     );
   });
 
@@ -224,7 +224,7 @@ describe('GameStatus', () => {
     );
   });
 
-  it('detects draw by three fold repetition', () => {
+  it('detects a draw by threefold repetition', () => {
     const board = new Board();
 
     board.setPiece(
@@ -250,7 +250,7 @@ describe('GameStatus', () => {
     );
   });
 
-  it('does not detects a three fold repetition before the third occurrence', () => {
+  it('does not detect threefold repetition before the third occurrence', () => {
     const board = new Board();
 
     board.setPiece(
