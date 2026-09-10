@@ -7,11 +7,13 @@ import { PieceType } from '../pieces/PieceType.js';
 import { Square } from '../board/Square.js';
 import { CastlingRights } from './CastlingRights.js';
 import type { Piece } from '../pieces/Piece.js';
+import { RepetitionTracker } from './RepetitionTracker.js';
 
 export class Game {
   private readonly moveValidator: MoveValidator;
   private readonly moveApplier: MoveApplier;
   private readonly history: Move[];
+  private readonly repetitionTracker: RepetitionTracker;
 
   public readonly position: Position;
 
@@ -23,6 +25,7 @@ export class Game {
     this.position = position;
     this.moveValidator = moveValidator;
     this.moveApplier = moveApplier;
+    this.repetitionTracker = new RepetitionTracker(this.position);
     this.history = [];
   }
 
@@ -61,6 +64,8 @@ export class Game {
 
     this.position.sideToMove =
       movingColor === Color.White ? Color.Black : Color.White;
+
+    this.repetitionTracker.record(this.position);
 
     this.history.push(move);
   }
@@ -148,5 +153,9 @@ export class Game {
         this.position.castlingRights &= ~CastlingRights.BlackKingSide;
         break;
     }
+  }
+
+  public isThreefoldRepetition(): boolean {
+    return this.repetitionTracker.isThreefoldRepetition(this.position);
   }
 }

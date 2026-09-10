@@ -26,6 +26,37 @@ function createBasicPosition(): Position {
   const position = new Position(board);
   return position;
 }
+
+function createGame(): Game {
+  const board = new Board();
+
+  board.setPiece(
+    Square.fromAlgebraic('e1'),
+    new Piece(Color.White, PieceType.King),
+  );
+
+  board.setPiece(
+    Square.fromAlgebraic('g1'),
+    new Piece(Color.White, PieceType.Knight),
+  );
+
+  board.setPiece(
+    Square.fromAlgebraic('e8'),
+    new Piece(Color.Black, PieceType.King),
+  );
+
+  board.setPiece(
+    Square.fromAlgebraic('g8'),
+    new Piece(Color.Black, PieceType.Knight),
+  );
+
+  return new Game(new Position(board));
+}
+
+function move(from: string, to: string): Move {
+  return new Move(Square.fromAlgebraic(from), Square.fromAlgebraic(to));
+}
+
 describe('Game', () => {
   it('creates a game with a position', () => {
     const position = new Position();
@@ -358,5 +389,29 @@ describe('Game', () => {
     );
 
     expect(position.castlingRights).toBe(CastlingRights.BlackQueenSide);
+  });
+});
+
+describe('threefold repetition', () => {
+  it('records the initial position as an occurrence', () => {
+    const game = createGame();
+
+    expect(game.isThreefoldRepetition()).toBe(false);
+  });
+
+  it('detects a position occurring three times', () => {
+    const game = createGame();
+
+    game.play(move('g1', 'f3'));
+    game.play(move('g8', 'f6'));
+    game.play(move('f3', 'g1'));
+    game.play(move('f6', 'g8'));
+
+    game.play(move('g1', 'f3'));
+    game.play(move('g8', 'f6'));
+    game.play(move('f3', 'g1'));
+    game.play(move('f6', 'g8'));
+
+    expect(game.isThreefoldRepetition()).toBe(true);
   });
 });
