@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { Board } from '../../../src/domain/board/Board.js';
 import { Square } from '../../../src/domain/board/Square.js';
@@ -11,6 +11,7 @@ import { CompositeEvaluator } from '../../../src/domain/engine/CompositeEvaluato
 import { MaterialEvaluator } from '../../../src/domain/engine/MaterialEvaluator.js';
 import { PositionalEvaluator } from '../../../src/domain/engine/PositionalEvaluator.js';
 import { Search } from '../../../src/domain/engine/Search.js';
+import { PositionTransition } from '../../../src/domain/game/PositionTransition.js';
 
 describe('Search', () => {
   const evaluator = new CompositeEvaluator([
@@ -152,5 +153,29 @@ describe('Search', () => {
     const position = new Position(board, Color.Black);
 
     expect(search.findBestMove(position, 1)).toBeNull();
+  });
+
+  it('uses position transition when exploring a move', () => {
+    const applySpy = vi.spyOn(PositionTransition.prototype, 'apply');
+
+    const board = new Board();
+
+    board.setPiece(
+      Square.fromAlgebraic('e1'),
+      new Piece(Color.White, PieceType.King),
+    );
+
+    board.setPiece(
+      Square.fromAlgebraic('e8'),
+      new Piece(Color.Black, PieceType.King),
+    );
+
+    const position = new Position(board, Color.White);
+
+    search.findBestMove(position, 1);
+
+    expect(applySpy).toHaveBeenCalled();
+
+    applySpy.mockRestore();
   });
 });
