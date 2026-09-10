@@ -5,20 +5,25 @@ import { LegalMoveGenerator } from '../moves/LegalMoveGenerator.js';
 import { MoveApplier } from '../moves/MoveApplier.js';
 import { Color } from '../pieces/Color.js';
 import { PositionCloner } from '../game/PositionCloner.js';
+import { CheckDetector } from '../game/CheckDetector.js';
+import { SearchScore } from './SearchScore.js';
 
 export class Search {
   private readonly evaluator: Evaluator;
   private readonly legalMoveGenerator: LegalMoveGenerator;
   private readonly moveApplier: MoveApplier;
+  private readonly checkDetector: CheckDetector;
 
   public constructor(
     evaluator: Evaluator,
     legalMoveGenerator: LegalMoveGenerator = new LegalMoveGenerator(),
     moveApplier: MoveApplier = new MoveApplier(),
+    checkDetector: CheckDetector = new CheckDetector(),
   ) {
     this.evaluator = evaluator;
     this.legalMoveGenerator = legalMoveGenerator;
     this.moveApplier = moveApplier;
+    this.checkDetector = checkDetector;
   }
 
   public findBestMove(position: Position, depth: number): Move | null {
@@ -46,7 +51,7 @@ export class Search {
 
       nextPosition.sideToMove = this.getOpponent(position.sideToMove);
 
-      const score = -this.negamax(nextPosition, depth - 1);
+      const score = -this.negamax(nextPosition, depth - 1, 1);
 
       if (score > bestScore) {
         bestScore = score;
@@ -57,14 +62,14 @@ export class Search {
     return bestMove;
   }
 
-  private negamax(position: Position, depth: number): number {
-    if (depth === 0) {
-      return this.evaluateForSideToMove(position);
-    }
-
+  private negamax(position: Position, depth: number, ply: number): number {
     const legalMoves = this.legalMoveGenerator.generateMoves(position);
 
     if (legalMoves.length === 0) {
+      return this.getTerminalScore(position, ply);
+    }
+
+    if (depth === 0) {
       return this.evaluateForSideToMove(position);
     }
 
@@ -77,7 +82,7 @@ export class Search {
 
       nextPosition.sideToMove = this.getOpponent(position.sideToMove);
 
-      const score = -this.negamax(nextPosition, depth - 1);
+      const score = -this.negamax(nextPosition, depth - 1, ply + 1);
 
       bestScore = Math.max(bestScore, score);
     }
@@ -93,5 +98,15 @@ export class Search {
 
   private getOpponent(color: Color): Color {
     return color === Color.White ? Color.Black : Color.White;
+  }
+
+  private getTerminalScore(position: Position, ply: number): number {
+    const inCheck = this.checkDetector.isInCheck(position, position.sideToMove);
+
+    if (!inCheck) {
+      return SearchScore.DRAW;
+    }
+
+    return -SearchScore.MATE + ply;
   }
 }
