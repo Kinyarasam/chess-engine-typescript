@@ -178,4 +178,63 @@ describe('Search', () => {
 
     applySpy.mockRestore();
   });
+
+  it('records search statistics', () => {
+    const board = new Board();
+
+    board.setPiece(
+      Square.fromAlgebraic('e1'),
+      new Piece(Color.White, PieceType.King),
+    );
+
+    board.setPiece(
+      Square.fromAlgebraic('e8'),
+      new Piece(Color.Black, PieceType.King),
+    );
+
+    const instrumentedSearch = new Search(evaluator);
+
+    const position = new Position(board, Color.White);
+
+    instrumentedSearch.findBestMove(position, 2);
+
+    const stats = instrumentedSearch.getStats();
+
+    expect(stats.nodesVisited).toBeGreaterThan(0);
+    expect(stats.cutoffs).toBeGreaterThanOrEqual(0);
+  });
+
+  it('records alpha-beta cutoffs', () => {
+    const board = new Board();
+
+    board.setPiece(
+      Square.fromAlgebraic('e1'),
+      new Piece(Color.White, PieceType.King),
+    );
+
+    board.setPiece(
+      Square.fromAlgebraic('e8'),
+      new Piece(Color.Black, PieceType.King),
+    );
+
+    board.setPiece(
+      Square.fromAlgebraic('a1'),
+      new Piece(Color.White, PieceType.Queen),
+    );
+
+    board.setPiece(
+      Square.fromAlgebraic('a8'),
+      new Piece(Color.Black, PieceType.Rook),
+    );
+
+    const position = new Position(board, Color.White);
+    const instrumentedSearch = new Search(evaluator);
+
+    instrumentedSearch.findBestMove(position, 3);
+
+    const stats = instrumentedSearch.getStats();
+
+    expect(stats.nodesVisited).toBeGreaterThan(0);
+    expect(stats.cutoffs).toBeGreaterThan(0);
+  });
 });

@@ -7,29 +7,35 @@ import { PositionCloner } from '../game/PositionCloner.js';
 import { CheckDetector } from '../game/CheckDetector.js';
 import { SearchScore } from './SearchScore.js';
 import { PositionTransition } from '../game/PositionTransition.js';
+import { SearchStats } from './SearchStats.js';
 
 export class Search {
   private readonly evaluator: Evaluator;
   private readonly legalMoveGenerator: LegalMoveGenerator;
   private readonly checkDetector: CheckDetector;
   private readonly positionTransition: PositionTransition;
+  private readonly stats: SearchStats;
 
   public constructor(
     evaluator: Evaluator,
     legalMoveGenerator: LegalMoveGenerator = new LegalMoveGenerator(),
     positionTransition: PositionTransition = new PositionTransition(),
     checkDetector: CheckDetector = new CheckDetector(),
+    stats: SearchStats = new SearchStats(),
   ) {
     this.evaluator = evaluator;
     this.legalMoveGenerator = legalMoveGenerator;
     this.positionTransition = positionTransition;
     this.checkDetector = checkDetector;
+    this.stats = stats;
   }
 
   public findBestMove(position: Position, depth: number): Move | null {
     if (!Number.isInteger(depth) || depth < 1) {
       throw new RangeError(`Search depth must be a positive integer: ${depth}`);
     }
+
+    this.stats.reset();
 
     const legalMoves = this.legalMoveGenerator.generateMoves(position);
 
@@ -49,7 +55,13 @@ export class Search {
 
       this.positionTransition.apply(nextPosition, move);
 
-      const score = -this.negamax(nextPosition, depth - 1, 1);
+      const score = -this.negamax(
+        nextPosition,
+        depth - 1,
+        1,
+        -Infinity,
+        Infinity,
+      );
 
       if (score > bestScore) {
         bestScore = score;
@@ -60,7 +72,15 @@ export class Search {
     return bestMove;
   }
 
-  private negamax(position: Position, depth: number, ply: number): number {
+  private negamax(
+    position: Position,
+    depth: number,
+    ply: number,
+    alpha: number,
+    beta: number,
+  ): number {
+    this.stats.nodesVisited += 1;
+
     const legalMoves = this.legalMoveGenerator.generateMoves(position);
 
     if (legalMoves.length === 0) {
@@ -78,9 +98,21 @@ export class Search {
 
       this.positionTransition.apply(nextPosition, move);
 
-      const score = -this.negamax(nextPosition, depth - 1, ply + 1);
+      const score = -this.negamax(
+        nextPosition,
+        depth - 1,
+        ply + 1,
+        -beta,
+        -alpha,
+      );
 
       bestScore = Math.max(bestScore, score);
+      alpha = Math.max(alpha, score);
+
+      if (alpha >= beta) {
+        this.stats.cutoffs += 1;
+        break;
+      }
     }
 
     return bestScore;
@@ -100,5 +132,9 @@ export class Search {
     }
 
     return -SearchScore.MATE + ply;
+  }
+
+  public getStats(): Readonly<SearchStats> {
+    return this.stats;
   }
 }
