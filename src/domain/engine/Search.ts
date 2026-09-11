@@ -1,5 +1,5 @@
 import { Position } from '../game/Position.js';
-import type { Move } from '../moves/Move.js';
+import { Move } from '../moves/Move.js';
 import type { Evaluator } from './Evaluator.js';
 import { LegalMoveGenerator } from '../moves/LegalMoveGenerator.js';
 import { Color } from '../pieces/Color.js';
@@ -8,6 +8,7 @@ import { CheckDetector } from '../game/CheckDetector.js';
 import { SearchScore } from './SearchScore.js';
 import { PositionTransition } from '../game/PositionTransition.js';
 import { SearchStats } from './SearchStats.js';
+import { MoveOrdering } from './MoveOrdering.js';
 
 export class Search {
   private readonly evaluator: Evaluator;
@@ -15,6 +16,7 @@ export class Search {
   private readonly checkDetector: CheckDetector;
   private readonly positionTransition: PositionTransition;
   private readonly stats: SearchStats;
+  private readonly moveOrdering: MoveOrdering;
 
   public constructor(
     evaluator: Evaluator,
@@ -22,12 +24,14 @@ export class Search {
     positionTransition: PositionTransition = new PositionTransition(),
     checkDetector: CheckDetector = new CheckDetector(),
     stats: SearchStats = new SearchStats(),
+    moveOrdering: MoveOrdering = new MoveOrdering(),
   ) {
     this.evaluator = evaluator;
     this.legalMoveGenerator = legalMoveGenerator;
     this.positionTransition = positionTransition;
     this.checkDetector = checkDetector;
     this.stats = stats;
+    this.moveOrdering = moveOrdering;
   }
 
   public findBestMove(position: Position, depth: number): Move | null {
@@ -37,7 +41,10 @@ export class Search {
 
     this.stats.reset();
 
-    const legalMoves = this.legalMoveGenerator.generateMoves(position);
+    const legalMoves = this.moveOrdering.order(
+      position,
+      this.legalMoveGenerator.generateMoves(position),
+    );
 
     if (legalMoves.length === 0) {
       return null;
@@ -81,7 +88,10 @@ export class Search {
   ): number {
     this.stats.nodesVisited += 1;
 
-    const legalMoves = this.legalMoveGenerator.generateMoves(position);
+    const legalMoves = this.moveOrdering.order(
+      position,
+      this.legalMoveGenerator.generateMoves(position),
+    );
 
     if (legalMoves.length === 0) {
       return this.getTerminalScore(position, ply);
