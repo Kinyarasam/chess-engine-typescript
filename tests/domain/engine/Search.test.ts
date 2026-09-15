@@ -76,7 +76,7 @@ describe('Search', () => {
     const board = new Board();
 
     board.setPiece(
-      Square.fromAlgebraic('e1'),
+      Square.fromAlgebraic('c7'),
       new Piece(Color.White, PieceType.King),
     );
 
@@ -97,6 +97,7 @@ describe('Search', () => {
 
     const position = new Position(board, Color.White);
 
+    const search = new Search(new MaterialEvaluator());
     const move = search.findBestMove(position, 1);
 
     expect(move).not.toBeNull();

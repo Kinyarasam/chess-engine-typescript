@@ -2,21 +2,21 @@ import { Position } from '../game/Position.js';
 import { Move } from '../moves/Move.js';
 import type { Evaluator } from './Evaluator.js';
 import { LegalMoveGenerator } from '../moves/LegalMoveGenerator.js';
-import { Color } from '../pieces/Color.js';
 import { PositionCloner } from '../game/PositionCloner.js';
 import { CheckDetector } from '../game/CheckDetector.js';
 import { SearchScore } from './SearchScore.js';
 import { PositionTransition } from '../game/PositionTransition.js';
 import { SearchStats } from './SearchStats.js';
 import { MoveOrdering } from './MoveOrdering.js';
+import { QuiescenceSearch } from './QuiescenceSearch.js';
 
 export class Search {
-  private readonly evaluator: Evaluator;
   private readonly legalMoveGenerator: LegalMoveGenerator;
   private readonly checkDetector: CheckDetector;
   private readonly positionTransition: PositionTransition;
   private readonly stats: SearchStats;
   private readonly moveOrdering: MoveOrdering;
+  private readonly quiescenceSearch: QuiescenceSearch;
 
   public constructor(
     evaluator: Evaluator,
@@ -25,13 +25,14 @@ export class Search {
     checkDetector: CheckDetector = new CheckDetector(),
     stats: SearchStats = new SearchStats(),
     moveOrdering: MoveOrdering = new MoveOrdering(),
+    quiescenceSearch: QuiescenceSearch = new QuiescenceSearch(evaluator),
   ) {
-    this.evaluator = evaluator;
     this.legalMoveGenerator = legalMoveGenerator;
     this.positionTransition = positionTransition;
     this.checkDetector = checkDetector;
     this.stats = stats;
     this.moveOrdering = moveOrdering;
+    this.quiescenceSearch = quiescenceSearch;
   }
 
   public findBestMove(position: Position, depth: number): Move | null {
@@ -98,7 +99,7 @@ export class Search {
     }
 
     if (depth === 0) {
-      return this.evaluateForSideToMove(position);
+      return this.quiescenceSearch.evaluate(position);
     }
 
     let bestScore = -Infinity;
@@ -126,12 +127,6 @@ export class Search {
     }
 
     return bestScore;
-  }
-
-  private evaluateForSideToMove(position: Position): number {
-    const score = this.evaluator.evaluate(position);
-
-    return position.sideToMove === Color.White ? score : -score;
   }
 
   private getTerminalScore(position: Position, ply: number): number {
